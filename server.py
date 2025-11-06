@@ -1,6 +1,6 @@
 import os
 import re
-import requests
+import requests as rqst
 import logging
 from typing import Final
 from fastapi import FastAPI, Request, HTTPException
@@ -30,7 +30,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Hello")
 
 def get_redirected_url(url: str):
-    r = requests.get(url, allow_redirects=True)
+    r = rqst.get(url, allow_redirects=True)
     return r.url
     
 def clean_tiktok_url(url: str) -> str:
