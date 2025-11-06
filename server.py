@@ -25,7 +25,6 @@ ptb_app: Application | None = None
 
 # ---- Handlers ----
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update,
     await update.message.reply_text("Hello")
 
 def get_redirected_url(url: str):
