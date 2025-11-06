@@ -25,14 +25,34 @@ ptb_app: Application | None = None
 
 # ---- Handlers ----
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update,
     await update.message.reply_text("Hello")
 
-def handle_response(text: str) -> str:
-    return "this is a test response"
+def get_redirected_url(url: str):
+    r = requests.get(url, allow_redirects=True)
+    return r.url
+    
+def clean_tiktok_url(url: str) -> str:
+    if '&' in url:
+        return url.split('&', 1)[0]
+    return url
+    
+def process_tiktok_url(url: str) -> str:
+    redirected_url = get_redirected_url(url)
+    clean_url = clean_tiktok_url(redirected_url)
+    return clean_url
+    
+def extract_tiktok_shortlink(text: str) -> str | None:
+    pattern = r"https://vt\.tiktok\.com/[A-Za-z0-9]+/"
+    match = re.search(pattern, text)
+    return match.group(0) if match else None
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text or ""
-    await update.message.reply_text(handle_response(text))
+    if url := extract_tiktok_shortlink(text):
+        await update.message.reply_text(process_tiktok_url(url))
+    else:
+        await update.message.reply_text("no valid link found")
 
 
 # ---- Lifecycle ----
@@ -51,7 +71,7 @@ async def on_startup():
 
     # Add handlers
     ptb_app.add_handler(CommandHandler("start", start_cmd))
-    ptb_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    ptb_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_msg))
 
     # Initialize + start PTB
     await ptb_app.initialize()
