@@ -1,21 +1,40 @@
-from flask import Flask, request
-import os, requests
+from typing import Final
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-app = Flask(__name__)
-TOKEN = os.environ["BOT_TOKEN"]
-TG = f"https://api.telegram.org/bot{TOKEN}"
+TOKEN: Final = '8448271704:AAE0E3jAM2OC0jbP9RNLy6bKQq3J7UQTRLI'
+BOT_USERNAME: Final = '@TikTokUrl2025Bot'
 
-@app.get("/")
-def health(): return "ok"
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+	await update.message.reply_text('Hello')
+	
+	
+def handle_response(text: str) -> str:
+	return 'this is a test response'
 
-@app.post("/webhook")
-def webhook():
-    update = request.get_json(silent=True) or {}
-    msg = update.get("message") or {}
-    text = (msg.get("text") or "").strip()
-    if text.split()[0].split("@")[0] == "/start":
-        requests.post(f"{TG}/sendMessage", data={
-            "chat_id": str(msg["chat"]["id"]),
-            "text": "hello!"
-        })
-    return "ok"
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+	message_type: str = update.message.chat.type
+	text: str = update.message.text
+	
+	print(f'User ({update.message.chat.id}) in {message_type}: "{text}"')
+	
+	response: str = handle_response(text)
+	
+	print('Bot:', response)
+	await update.message.reply_text(response)
+	
+async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
+	print(f'Update {update} casued error {context.error}')
+	
+if __name__ == '__main__':
+	print('Starting bot...')
+	app = Application.builder().token(TOKEN).build()
+	
+	app.app_handler(CommandHandler('start', start_command))
+	
+	app.add_handler(MessageHandler(filters.TEXT, handle_message))
+	
+	app.add_error_handler(error)
+	
+	print('Polling...')
+	app.run_polling(poll_interval=3)
